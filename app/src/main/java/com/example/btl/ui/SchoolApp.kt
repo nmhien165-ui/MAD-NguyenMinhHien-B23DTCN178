@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteException
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -13,6 +14,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.btl.data.*
@@ -21,9 +24,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private enum class Screen(val title: String, val symbol: String) {
-    STUDENTS("Học viên", "HV"), COURSES("Khóa học", "KH"),
-    ENROLLMENTS("Ghi danh", "GN"), REPORTS("Báo cáo", "BC")
+internal enum class Screen(val title: String) {
+    STUDENTS("Học viên"), COURSES("Khóa học"),
+    ENROLLMENTS("Ghi danh"), REPORTS("Báo cáo")
 }
 
 private data class DeleteRequest(val title: String, val message: String, val action: () -> Unit)
@@ -35,6 +38,9 @@ fun SchoolApp(database: SchoolDatabase = SchoolDatabase.getInstance(LocalContext
     var data by remember { mutableStateOf(SchoolData()) }
     var screenName by rememberSaveable { mutableStateOf(Screen.STUDENTS.name) }
     val screen = Screen.valueOf(screenName)
+    val listState = remember(screen) { LazyListState() }
+    val focus = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
     var query by rememberSaveable { mutableStateOf("") }
     var selectedCourseId by rememberSaveable { mutableStateOf<Long?>(null) }
     var pythonReport by rememberSaveable { mutableStateOf(false) }
@@ -65,7 +71,8 @@ fun SchoolApp(database: SchoolDatabase = SchoolDatabase.getInstance(LocalContext
     // Keep the current course when possible; clear selection after the last course is deleted.
     val selectedCourse = data.courses.firstOrNull { it.id == selectedCourseId } ?: data.courses.firstOrNull()
     val courseId = selectedCourse?.id
-    fun perform(success: String, action: () -> Unit, onSuccess: () -> Unit) {
+    fun perform(success: String, action: () -> Unit,
+                conflict: String = "Dữ liệu đã thay đổi. Vui lòng kiểm tra lại.", onSuccess: () -> Unit) {
         if (busy) return
         busy = true
         actionError = null
@@ -78,7 +85,7 @@ fun SchoolApp(database: SchoolDatabase = SchoolDatabase.getInstance(LocalContext
             } catch (e: CancellationException) {
                 throw e
             } catch (_: SQLiteConstraintException) {
-                actionError = "Mã đã tồn tại hoặc học viên đã được ghi danh. Vui lòng kiểm tra lại."
+                actionError = conflict
             } catch (_: SQLiteException) {
                 actionError = "Không thể lưu dữ liệu SQLite. Hãy kiểm tra dung lượng máy rồi thử lại."
             } catch (_: Exception) {
@@ -93,22 +100,24 @@ fun SchoolApp(database: SchoolDatabase = SchoolDatabase.getInstance(LocalContext
             NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                 Screen.entries.forEach { tab ->
                     NavigationBarItem(selected = screen == tab, enabled = !busy,
-                        onClick = { screenName = tab.name; query = ""; actionError = null },
-                        icon = { Text(tab.symbol, fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.labelLarge) }, label = { Text(tab.title) })
+                        onClick = {
+                            focus.clearFocus(); keyboard?.hide()
+                            screenName = tab.name; query = ""; actionError = null
+                        },
+                        icon = { ScreenIcon(tab) }, label = { Text(tab.title) })
                 }
             }
         }
     ) { padding ->
-        LazyColumn(modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        LazyColumn(modifier = Modifier.fillMaxSize().padding(padding), state = listState,
+            contentPadding = PaddingValues(horizontal = 18.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween) {
                     Column {
-                        Text("LỚP HỌC NHÍ", style = MaterialTheme.typography.labelMedium,
+                        Text("QUẢN LÝ LỚP LẬP TRÌNH", style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                        Text("Cùng trẻ học lập trình", style = MaterialTheme.typography.headlineSmall,
+                        Text("Lớp học nhí", style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold)
                     }
                 }
@@ -119,7 +128,8 @@ fun SchoolApp(database: SchoolDatabase = SchoolDatabase.getInstance(LocalContext
                     horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(screen.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     if (screen == Screen.STUDENTS || screen == Screen.COURSES) {
-                        FilledTonalButton(enabled = !loading && !busy && loadError == null, onClick = {
+                        Button(enabled = !loading && !busy && loadError == null, onClick = {
+                            focus.clearFocus(); keyboard?.hide()
                             actionError = null
                             if (screen == Screen.STUDENTS) { editingStudentId = null; studentEditorOpen = true }
                             else { editingCourseId = null; courseEditorOpen = true }
@@ -244,17 +254,20 @@ fun SchoolApp(database: SchoolDatabase = SchoolDatabase.getInstance(LocalContext
     if (!loading && loadError == null) {
         if (studentEditorOpen) StudentEditor(data.students.firstOrNull { it.id == editingStudentId }, busy, actionError,
             onDismiss = { studentEditorOpen = false; actionError = null }) { code, name, age, level ->
-            perform("Đã lưu học viên", { database.saveStudent(editingStudentId, code, name, age, level) }) { studentEditorOpen = false }
+            perform("Đã lưu học viên", { database.saveStudent(editingStudentId, code, name, age, level) },
+                conflict = "Mã học viên đã tồn tại. Hãy nhập mã khác.") { studentEditorOpen = false }
         }
         if (courseEditorOpen) CourseEditor(data.courses.firstOrNull { it.id == editingCourseId }, busy, actionError,
             onDismiss = { courseEditorOpen = false; actionError = null }) { code, name, language, level ->
-            perform("Đã lưu khóa học", { database.saveCourse(editingCourseId, code, name, language, level) }) { courseEditorOpen = false }
+            perform("Đã lưu khóa học", { database.saveCourse(editingCourseId, code, name, language, level) },
+                conflict = "Mã khóa học đã tồn tại. Hãy nhập mã khác.") { courseEditorOpen = false }
         }
         if (enrollmentEditorOpen && selectedCourse != null) {
             val enrolled = data.enrollments.filter { it.courseId == selectedCourse.id }.map { it.studentId }.toSet()
             EnrollmentEditor(selectedCourse, data.students.filter { it.id !in enrolled }, busy, actionError,
                 onDismiss = { enrollmentEditorOpen = false; actionError = null }) { studentId ->
-                perform("Đã ghi danh học viên", { database.enroll(studentId, selectedCourse.id) }) { enrollmentEditorOpen = false }
+                perform("Đã ghi danh học viên", { database.enroll(studentId, selectedCourse.id) },
+                    conflict = "Không thể ghi danh. Hãy kiểm tra học viên và khóa học đã chọn.") { enrollmentEditorOpen = false }
             }
         }
     }

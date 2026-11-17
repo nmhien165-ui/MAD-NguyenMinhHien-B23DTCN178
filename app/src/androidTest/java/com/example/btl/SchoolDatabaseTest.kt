@@ -20,7 +20,7 @@ class SchoolDatabaseTest {
     @After fun tearDown() { db.close(); context.deleteDatabase(dbName) }
 
     private fun student(code: String, age: Int = 10): Long {
-        db.saveStudent(null, code, "Học viên $code", age.toString(), "Cơ bản")
+        db.saveStudent(null, code, "Học viên kiểm thử", age.toString(), "Cơ bản")
         return db.snapshot().students.first { it.code == code }.id
     }
     private fun course(code: String, language: String = "Python", level: String = "Cơ bản"): Long {

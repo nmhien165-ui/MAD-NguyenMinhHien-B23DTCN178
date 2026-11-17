@@ -1,21 +1,58 @@
 package com.example.btl.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.btl.data.Student
 
 @Composable
 internal fun Panel(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    Card(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
+    OutlinedCard(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp), content = content)
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp), content = content)
+    }
+}
+
+@Composable
+internal fun ScreenIcon(screen: Screen) {
+    val color = LocalContentColor.current
+    Canvas(Modifier.size(24.dp)) {
+        val unit = size.width / 24
+        fun line(x: Int, y: Int, a: Int, b: Int) =
+            drawLine(color, Offset(x * unit, y * unit), Offset(a * unit, b * unit),
+                1.8f * unit, StrokeCap.Round)
+        fun circle(x: Int, y: Int, r: Int) =
+            drawCircle(color, r * unit, Offset(x * unit, y * unit), style = Stroke(1.8f * unit))
+        fun rect(x: Int, y: Int, w: Int, h: Int) =
+            drawRect(color, Offset(x * unit, y * unit), Size(w * unit, h * unit), style = Stroke(1.8f * unit))
+        when (screen) {
+            Screen.STUDENTS -> {
+                circle(12, 7, 3); line(5, 19, 5, 17); line(5, 17, 8, 14)
+                line(8, 14, 16, 14); line(16, 14, 19, 17); line(19, 17, 19, 19)
+            }
+            Screen.COURSES -> {
+                rect(4, 5, 16, 14); line(12, 5, 12, 19)
+            }
+            Screen.ENROLLMENTS -> {
+                rect(5, 4, 14, 16); line(8, 12, 11, 15); line(11, 15, 16, 9)
+            }
+            Screen.REPORTS -> {
+                line(4, 20, 20, 20); line(7, 16, 7, 11); line(12, 16, 12, 7); line(17, 16, 17, 4)
+            }
+        }
     }
 }
 

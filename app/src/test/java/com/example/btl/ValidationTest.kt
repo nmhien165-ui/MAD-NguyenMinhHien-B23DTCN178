@@ -35,4 +35,13 @@ class ValidationTest {
         assertNotNull(Validation.course("KH01", "Lập trình", "Java", "Cơ bản"))
         assertNotNull(Validation.course("KH01", "Lập trình", "Python", "beginner"))
     }
+
+    @Test fun malformedCodesAndNumericNamesAreRejected() {
+        assertNotNull(Validation.student("HV 01", "Nguyễn An", "11", "Cơ bản"))
+        assertNotNull(Validation.student("HV01", "234567", "11", "Cơ bản"))
+        assertNotNull(Validation.student("HV01", "Nguyễn An 2", "11", "Cơ bản"))
+        assertNotNull(Validation.course("PY01", "123", "Python", "Cơ bản"))
+        assertNull(Validation.student("HV-01", "Nguyễn An", " 11 ", "Cơ bản"))
+        assertNull(Validation.course("PY_01", "Python 101", "Python", "Cơ bản"))
+    }
 }

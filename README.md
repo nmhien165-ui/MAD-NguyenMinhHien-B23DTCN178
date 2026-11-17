@@ -29,7 +29,7 @@ Các lựa chọn sau bổ sung cho bảng đề bài và có thể điều ch�
 
 - Một học viên có thể học nhiều khóa; mỗi cặp học viên–khóa chỉ có một lượt ghi danh.
 - Tuổi là số nguyên từ 1 đến 17. Báo cáo lấy cả tuổi **10 và 12**.
-- Mã bắt buộc, tối đa 30 ký tự, duy nhất trong từng loại đối tượng, không phân biệt hoa/thường ASCII. Tên bắt buộc, tối đa 100 ký tự. Mã và tên được cắt khoảng trắng đầu/cuối.
+- Mã bắt buộc, tối đa 30 ký tự, chỉ dùng chữ không dấu, số, dấu gạch nối hoặc gạch dưới; duy nhất trong từng loại đối tượng, không phân biệt hoa/thường ASCII. Tên bắt buộc, tối đa 100 ký tự và phải có chữ cái. Tên học viên không chấp nhận chữ số. Mã và tên được cắt khoảng trắng đầu/cuối.
 - Trình độ Scratch: Chưa học, Cơ bản, Trung cấp, Nâng cao.
 - Ngôn ngữ khóa: Scratch hoặc Python. Cấp độ: Cơ bản, Trung cấp, Nâng cao.
 - Điều kiện “Python cơ bản” dựa trên hai trường **ngôn ngữ** và **cấp độ**, không dựa vào tên khóa.
@@ -99,10 +99,10 @@ $env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
 
 APK debug: `app/build/outputs/apk/debug/app-debug.apk`.
 
-Kiểm thử nghiệp vụ dùng database riêng, không sửa database của ứng dụng. Bao gồm validation, CRUD và lưu qua lần mở lại DB, mã trùng, khóa ngoại, ghi danh trùng, hủy ghi danh, xóa cascade, truy vấn tuổi ở các mốc 9/10/11/12/13, loại khóa sai và loại bản ghi trùng. Kiểm thử Compose đi qua luồng thêm học viên → thêm khóa → ghi danh → báo cáo.
+Kiểm thử nghiệp vụ dùng database riêng, không sửa database của ứng dụng. Bao gồm validation, CRUD và lưu qua lần mở lại DB, mã trùng, khóa ngoại, ghi danh trùng, hủy ghi danh, xóa cascade, truy vấn tuổi ở các mốc 9/10/11/12/13, loại khóa sai và loại bản ghi trùng. Kiểm thử Compose dùng thao tác chạm để kiểm tra form, thêm/sửa/xóa, tìm kiếm, ghi danh, hủy ghi danh và cả hai báo cáo.
 
 Thư viện kiểm thử Espresso đã nâng lên 3.7.0 và AndroidX Test JUnit lên 1.3.0. Bản Espresso cũ trong project gặp lỗi gọi `InputManager.getInstance` trên emulator hiện tại; AndroidX đã sửa cách lấy InputManager, xem [ghi chú phát hành AndroidX Test](https://developer.android.com/jetpack/androidx/releases/test).
 
-Kết quả kiểm chứng bản nộp (17/11/2026): build APK debug thành công, 6/6 unit test, 10/10 kiểm thử Android trên máy ảo API 37 và mở ứng dụng thành công. Android Lint ghi nhận 0 lỗi và 14 cảnh báo. Chưa kiểm thử trên điện thoại thật.
+Kết quả lần kiểm tra lại: build APK debug thành công, 7/7 unit test, 12/12 kiểm thử Android trên máy ảo API 37 và mở ứng dụng thành công. Android Lint ghi nhận 0 lỗi và 14 cảnh báo. Chưa kiểm thử trên điện thoại thật.
 
 Báo cáo PTIT: [PDF để in một mặt](docs/Bao-cao-MAD-NguyenMinhHien-B23DTCN178.pdf) · [Bản Word](docs/Bao-cao-MAD-NguyenMinhHien-B23DTCN178.docx).

@@ -69,7 +69,7 @@ class SchoolDatabase(context: Context, name: String = "programming_school.db") :
         require(Validation.student(code, name, age, level) == null)
         val values = ContentValues().apply {
             put("code", code.trim()); put("name", name.trim())
-            put("age", age.toInt()); put("scratch_level", level)
+            put("age", age.trim().toInt()); put("scratch_level", level)
         }
         if (id == null) writableDatabase.insertOrThrow("students", null, values)
         else check(writableDatabase.update("students", values, "id = ?", arrayOf(id.toString())) == 1)

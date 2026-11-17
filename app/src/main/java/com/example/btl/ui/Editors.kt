@@ -8,9 +8,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.btl.data.*
+
+@Composable
+private fun EditorField(label: String, value: String, onChange: (String) -> Unit,
+                        busy: Boolean, error: String?, type: KeyboardType = KeyboardType.Text) {
+    OutlinedTextField(value, onChange, label = { Text(label) }, singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = type), enabled = !busy,
+        isError = error != null, supportingText = error?.let { message -> { Text(message) } },
+        modifier = Modifier.fillMaxWidth())
+}
 
 @Composable
 internal fun StudentEditor(student: Student?, busy: Boolean, serverError: String?, onDismiss: () -> Unit,
@@ -19,25 +30,25 @@ internal fun StudentEditor(student: Student?, busy: Boolean, serverError: String
     var name by rememberSaveable { mutableStateOf(student?.name ?: "") }
     var age by rememberSaveable { mutableStateOf(student?.age?.toString() ?: "") }
     var level by rememberSaveable { mutableStateOf(student?.scratchLevel ?: "Chưa học") }
-    var error by rememberSaveable { mutableStateOf<String?>(null) }
+    var submitted by rememberSaveable { mutableStateOf(false) }
+    val focus = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
     AlertDialog(onDismissRequest = { if (!busy) onDismiss() },
         title = { Text(if (student == null) "Thêm học viên" else "Sửa học viên") },
         text = {
-            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(code, { code = it }, label = { Text("Mã học viên") },
-                    singleLine = true, enabled = !busy, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(name, { name = it }, label = { Text("Tên học viên") },
-                    singleLine = true, enabled = !busy, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(age, { age = it }, label = { Text("Tuổi (1–17)") }, singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    enabled = !busy, modifier = Modifier.fillMaxWidth())
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                ErrorText(serverError)
+                EditorField("Mã học viên", code, { code = it }, busy, if (submitted) Validation.code(code, "học viên") else null)
+                EditorField("Tên học viên", name, { name = it }, busy, if (submitted) Validation.name(name, student = true) else null)
+                EditorField("Tuổi (1–17)", age, { age = it }, busy, if (submitted) Validation.age(age) else null, KeyboardType.Number)
                 ChoiceField("Trình độ Scratch", SchoolOptions.scratchLevels.map { it to it }, level, !busy) { level = it }
-                ErrorText(error ?: serverError)
             }
         },
         confirmButton = { Button(enabled = !busy, onClick = {
-            error = Validation.student(code, name, age, level)
-            if (error == null) onSave(code, name, age, level)
+            submitted = true
+            focus.clearFocus()
+            keyboard?.hide()
+            if (Validation.student(code, name, age, level) == null) onSave(code, name, age, level)
         }) { Text(if (busy) "Đang lưu…" else "Lưu học viên") } },
         dismissButton = { TextButton(enabled = !busy, onClick = onDismiss) { Text("Hủy") } })
 }
@@ -49,23 +60,25 @@ internal fun CourseEditor(course: Course?, busy: Boolean, serverError: String?, 
     var name by rememberSaveable { mutableStateOf(course?.name ?: "") }
     var language by rememberSaveable { mutableStateOf(course?.language ?: "Scratch") }
     var level by rememberSaveable { mutableStateOf(course?.level ?: "Cơ bản") }
-    var error by rememberSaveable { mutableStateOf<String?>(null) }
+    var submitted by rememberSaveable { mutableStateOf(false) }
+    val focus = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
     AlertDialog(onDismissRequest = { if (!busy) onDismiss() },
         title = { Text(if (course == null) "Thêm khóa học" else "Sửa khóa học") },
         text = {
-            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(code, { code = it }, label = { Text("Mã khóa học") }, singleLine = true,
-                    enabled = !busy, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(name, { name = it }, label = { Text("Tên khóa học") }, singleLine = true,
-                    enabled = !busy, modifier = Modifier.fillMaxWidth())
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                ErrorText(serverError)
+                EditorField("Mã khóa học", code, { code = it }, busy, if (submitted) Validation.code(code, "khóa học") else null)
+                EditorField("Tên khóa học", name, { name = it }, busy, if (submitted) Validation.name(name, student = false) else null)
                 ChoiceField("Ngôn ngữ", SchoolOptions.languages.map { it to it }, language, !busy) { language = it }
                 ChoiceField("Cấp độ", SchoolOptions.levels.map { it to it }, level, !busy) { level = it }
-                ErrorText(error ?: serverError)
             }
         },
         confirmButton = { Button(enabled = !busy, onClick = {
-            error = Validation.course(code, name, language, level)
-            if (error == null) onSave(code, name, language, level)
+            submitted = true
+            focus.clearFocus()
+            keyboard?.hide()
+            if (Validation.course(code, name, language, level) == null) onSave(code, name, language, level)
         }) { Text(if (busy) "Đang lưu…" else "Lưu khóa học") } },
         dismissButton = { TextButton(enabled = !busy, onClick = onDismiss) { Text("Hủy") } })
 }
