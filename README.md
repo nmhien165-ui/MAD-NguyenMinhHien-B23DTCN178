@@ -105,4 +105,4 @@ Thư viện kiểm thử Espresso đã nâng lên 3.7.0 và AndroidX Test JUnit 
 
 Kết quả lần kiểm tra lại: build APK debug thành công, 7/7 unit test, 12/12 kiểm thử Android trên máy ảo API 37 và mở ứng dụng thành công. Android Lint ghi nhận 0 lỗi và 14 cảnh báo. Chưa kiểm thử trên điện thoại thật.
 
-Báo cáo PTIT: [PDF để in một mặt](docs/Bao-cao-MAD-NguyenMinhHien-B23DTCN178.pdf) · [Bản Word](docs/Bao-cao-MAD-NguyenMinhHien-B23DTCN178.docx).
+Báo cáo PTIT: [PDF bản 15 trang để in một mặt](docs/Bao-cao-MAD-NguyenMinhHien-B23DTCN178-15-trang.pdf) · [Bản Word](docs/Bao-cao-MAD-NguyenMinhHien-B23DTCN178.docx).
