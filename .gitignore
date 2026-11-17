@@ -17,4 +17,3 @@ local.properties
 /.kotlin/
 **/build/
 /.report-qa/
-/WORK_STATUS.md
